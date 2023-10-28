@@ -153,6 +153,9 @@ $MESS['ERROR_INDEX_BLOCKS_BAD_TYPE'] = 'Ошибка чтения парамет
 $MESS['ERROR_INDEX_BLOCKS_NOT_FOUND'] = 'Публикации для главной не найдены';
 
 
+$MESS['ERROR_RUBRIC_BLOCKS_NOT_FOUND'] = 'Публикации для рубрики не найдены';
+
+
 
 $moduleId = 'sotbit.restapi';
 $MESS = array_combine( array_map(function($k) use ($moduleId){ return $moduleId.'_'.$k; }, array_keys($MESS)), $MESS );

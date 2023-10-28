@@ -70,18 +70,19 @@ class PublicationRepository extends BaseRepository
      * @return array
      * @throws CatalogException
      */
-    public function getPublicationTypeEl(string $iblockId, int $elId, int $userId) {
+    public function getPublicationTypeEl(array $args, int $elId, int $userId) {
         // check permission
         //$this->permission->user($userId)->publication($id);
         
         $params = 
         [
-            'IBLOCK_CODE' => $iblockId,
+            'IBLOCK_ID' => $args['iblock_id'],
+            'IBLOCK_CODE' => $args['iblock_code'],
             'ID' => $elId
         ];
         $publication = new _Publication\Type();
 
-        return $publication->setUserId($userId)->get($params);
+        return $publication->setUserId($userId)->getOne($params);
 
     }
     
@@ -94,8 +95,7 @@ class PublicationRepository extends BaseRepository
         $params = $this->prepareFilterTypePublication($params);
 
         // check permission
-        // $this->permission->user($userId)->section($iblockId, 0);
-        // $this->permission->user($userId)->section((int) $params['filter']['IBLOCK_ID'], 0);
+        // $this->permission->user($userId)->section($iblockId, 0); 
 
         $result = [];
 

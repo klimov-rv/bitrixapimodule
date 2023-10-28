@@ -19,14 +19,14 @@ class Rubric extends Base
             'menu_code'  => "rubrics",
             'blocks'  => $request->getQueryParam('blocks'),
             'limit'  => $request->getQueryParam('limit'),
+            'page'    => $request->getQueryParam('page'),
+            // 'filter'  => $request->getQueryParam('filter'),
+            // 'order'   => $request->getQueryParam('order'),
         ];
 
         // if ($this->params['blocks'] === NULL) {
         //     $this->params['blocks'] = 'news,articles,events';
-        // }
-        if ($this->params['limit'] === NULL) {
-            $this->params['limit'] = '50';
-        }
+        // } 
         
         // repository
         $blocks = $this->getRepository()->getRubricIndexPage((int)$args['id'], (array)$this->params, $this->getUserId($request));
@@ -35,11 +35,12 @@ class Rubric extends Base
     }
 
     public function getList(Request $request, Response $response, array $args): Response
-    {
+    { 
         $this->params = [ 
             'menu_code'  => "rubrics", 
             'order'   => $request->getQueryParam('order'),
             'limit'   => $request->getQueryParam('limit'), 
+            'page'    => $request->getQueryParam('page'),
         ];
         
         // repository

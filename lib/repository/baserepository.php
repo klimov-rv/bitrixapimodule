@@ -109,7 +109,7 @@ abstract class BaseRepository
     {
         $return = [];
         $filter = [];
-        $filterDefault = ['ACTIVE' => 'Y', 'ACTIVE_DATE' => 'Y']; 
+        $filterDefault = ['ACTIVE' => 'Y', 'ACTIVE_DATE' => 'Y'];
 
         if(isset($params['filter']['IBLOCK_ID'])) {
             $filterDefault['IBLOCK_ID'] = $params['filter']['IBLOCK_ID'];
@@ -135,7 +135,6 @@ abstract class BaseRepository
         if(empty($params['order'])) {
             $params['order'] = ['ID' => 'DESC'];
         }
-
 
         if(is_array($params['filter'])) {
             $filter = array_map(
@@ -182,15 +181,14 @@ abstract class BaseRepository
             // prepare detail picture
             if(is_numeric($array['DETAIL_PICTURE'])) {
                 $array['DETAIL_PICTURE'] = $this->getPictureSrc((int) $array['DETAIL_PICTURE'], $sizePreview);
-            } else {
+            } else if (isset($array['DETAIL_PICTURE'])) {
                 $array['DETAIL_PICTURE']['ORIGINAL'] = $array['DETAIL_PICTURE']['RESIZE'] = self::IMAGE_NOT_FOUND;
             }
-
 
             // prepare preview picture
             if(is_numeric($array['PREVIEW_PICTURE'])) {
                 $array['PREVIEW_PICTURE'] = $this->getPictureSrc((int) $array['PREVIEW_PICTURE'], $sizePreview);
-            } else {
+            } else if (isset($array['PREVIEW_PICTURE'])) {
                 $array['PREVIEW_PICTURE']['ORIGINAL'] = $array['PREVIEW_PICTURE']['RESIZE'] = self::IMAGE_NOT_FOUND;
             }
         }

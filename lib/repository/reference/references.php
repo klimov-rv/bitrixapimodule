@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Sotbit\RestAPI\Repository\Rubric;
+namespace Sotbit\RestAPI\Repository\Reference;
 
 use Slim\Http\StatusCode;
-use Sotbit\RestAPI\Exception\RubricException;
+use Sotbit\RestAPI\Exception\ReferenceException;
 use Sotbit\RestAPI\Exception\OrderException,
     Sotbit\RestAPI\Core,
     Sotbit\RestAPI\Localisation as l,
-    Sotbit\RestAPI\Repository\RubricRepository;
+    Sotbit\RestAPI\Repository\ReferenceRepository;
 
 use Bitrix\Sale,
     Bitrix\Main\Entity,
@@ -19,66 +19,71 @@ use Bitrix\Sale,
     Bitrix\Sale\Cashbox\CheckManager,
     Bitrix\Main\Config\Option;
 
-class Rubric extends RubricRepository
+class References extends ReferenceRepository
 {
-    public function getAll(array $params): array
+    public function getAll(): array
     {
-        $result = []; 
-        $collect = [];
+        $result = [];
 
-        $params['order'] = (array)($params['order'] ?? ['ID' => 'DESC']); 
-        $params['filter'] = (array)(["ACTIVE" => "Y", "IBLOCK_CODE" => $params['menu_code']]);
-         
-        $params['limit']  = isset($params['limit']) ? (array)(['nPageSize' => $params['limit']]) : false;
-        $params['select'] = (array)(["ID", "IBLOCK_ID", "CODE", "NAME", "USER_NAME"]); 
-        
-        // iblock elements
-        $collect['ELEMENTS'] = $this->getElements($params, $elID);
+        // $refs = explode(",", $params['refs']);
+        // $elements = [];
 
-        // collect all information
-        foreach ($collect['ELEMENTS'] as $elementId => $elementData) {
-            $result[$elementId] = $elementData;
+        // if(count($refs) > 1) {
+        //     throw new IndexException(l::get('ERROR_INDEX_BLOCKS_BAD_TYPE'), StatusCode::HTTP_BAD_REQUEST);
+        // }
+        // if($this->getUserId() === null) {
+        //     throw new IndexException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+        // }
+        // $result = \CIBlockSection::GetList([], ['IBLOCK_CODE' => 'news1'])->Fetch()['ID'];
+
+        $arSelect = array("ID", "NAME", "USER_NAME",);
+        $navParams = ['nTopCount' => $params['limit']];  //   default = 3 
+        $blockTypes  = \CIBlock::GetList(array("SORT" => "ASC"), ['TYPE' => 'references']);
+
+        while ($getBlockType = $blockTypes->fetch()) {
+
+            // \Bitrix\Main\Diag\Debug::dumpToFile($getBlockType, $varName = '$getBlockType', $fileName = 'dumpToFile.txt');
+            $result[$getBlockType['CODE']] = [
+                "REF_BLOCK_ID" => $getBlockType['ID'],
+                "REF_BLOCK_NAME" => $getBlockType['NAME'],
+        ];
+            // if (in_array($getBlockType['CODE'], $refs)) {
+
+            //     $blockEls = \CIBlockElement::GetList(array("ID" => "DESC"),  array("ACTIVE" => "Y", "IBLOCK_CODE" => $getBlockType["CODE"]),  false,  $navParams, $arSelect);
+
+            //     while ($element = $blockEls->fetch()) {
+            //         array_push($elements,  $this->prepareReturn($element, self::TYPE_DETAIL));
+            //     }
+            //     \Bitrix\Main\Diag\Debug::dumpToFile($element, $varName = '$returnFiles', $fileName = 'dumpToFile.txt');
+            //      $result[$getBlockType['CODE']] = [
+            //             "INDEX_BLOCK_ID" => $getBlockType['ID'],
+            //             "INDEX_BLOCK_ELEMENTS" => $elements,
+            //      ];
+            // }
         }
 
-        return $result;
-    }
-    
-    public function getCurrentRubric(int $elID, array $params): array
-    {
-        $result = [];  
-  
-        $res = \CIBlockElement::GetByID($elID);
-        if($ar_res = $res->GetNext()) {  
-
-            $params['filter'] = (array)(['TYPE' => 'publications']); 
-            $rubric_data = [
-                "RUBRIC_ID" => $ar_res['ID'],
-                "RUBRIC_CODE" => $ar_res['CODE'],
-                "RUBRIC_NAME" => $ar_res['NAME']];
-            $elements = $this->getElements($params, $elID, $rubric_data);  
-            
-            $result  = $elements; 
-        }   
-        
         // check isset
         if (!$result) {
-            throw new RubricException(l::get('ERROR_RUBRIC_BLOCKS_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new ReferenceException(l::get('ERROR_INDEX_BLOCKS_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
         }
 
         $result = $this->prepareReturn($result, self::TYPE_LIST);
 
         return $result;
     }
+
   
-    public function getElements(array $params, int $elID = null, array $rubric_data = []): array
+    public function getElements(array $params, int $elID = null, array $Reference_data = []): array
     {
         if ($elID) {
             $elements = [];
 
             $navParams = ['nPageSize' => $params['limit'], 'iNumPage' => $params['page']];
-            $arFilter = (array)(["ACTIVE" => "Y", "PROPERTY_PUB_RUBRIC" => (string)$elID  ]); 
-            $arSelect = Array();  
-
+            // $params['select'] = empty($params['select'])? self::FIELD_ELEMENT : array_unique(array_merge($params['select'], self::FIELD_ELEMENT_REQUEST));
+           
+            $arFilter = (array)(["ACTIVE" => "Y", "PROPERTY_PUB_Reference" => (string)$elID  ]); 
+            $arSelect = Array(); 
+            // $req = \CIBlockElement::GetList(Array(),            $arFilter,          false,      Array("nPageSize"=>10),    $params['select']);
             $req = \CIBlockElement::GetList(
                 array(),   
                 $arFilter,  
@@ -89,7 +94,8 @@ class Rubric extends RubricRepository
      
             while ($el = $req->fetch()) { 
                 $prepareEl = [];
-                 
+                
+            // \Bitrix\Main\Diag\Debug::dumpToFile($el, $varName = '$el', $fileName = 'dumpToFile.txt');
                 $prepareEl["ID"] = $el["ID"]; 
                 $prepareEl["NAME"] = $el["NAME"]; 
                 $prepareEl["CODE"] = $el["CODE"];
@@ -105,18 +111,18 @@ class Rubric extends RubricRepository
                 $prepareEl["USER_PHOTO"] = \CFile::GetPath($user['PERSONAL_PHOTO']); 
 
                 $prepareEl["PICTURE"] = $el["DETAIL_PICTURE"];
-                $prepareEl = array_merge($prepareEl, (array)($rubric_data));  
+                $prepareEl = array_merge($prepareEl, (array)($Reference_data));  
                 array_push($elements,  $this->prepareReturn($prepareEl, self::TYPE_DETAIL)); 
             } 
 
             
-        $result[$rubric_data["RUBRIC_CODE"]] = $elements; 
+        $result[$Reference_data["Reference_CODE"]] = $elements; 
 
         // count all
-        $countAll = \CIBlockElement::GetList([], $arFilter, false, ['ID','PROPERTY_PUB_RUBRIC']); 
+        $countAll = \CIBlockElement::GetList([], $arFilter, false, ['ID','PROPERTY_PUB_Reference']); 
 
         // info
-        $result['info']['rubric_name'] = $rubric_data['RUBRIC_NAME'];
+        $result['info']['Reference_name'] = $Reference_data['Reference_NAME'];
         $result['info']['count_select'] = count($elements);
         $result['info']['count_all'] = (int)$countAll->SelectedRowsCount(); 
         

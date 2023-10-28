@@ -33,7 +33,6 @@ class Blocks extends IndexRepository
         // if($this->getUserId() === null) {
         //     throw new IndexException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
         // }
-        // $result = \CIBlockSection::GetList([], ['IBLOCK_CODE' => 'news1'])->Fetch()['ID'];
 
         $arSelect = array("ID", "NAME", "USER_NAME", "PREVIEW_PICTURE",  "DATE_CREATE");
         $navParams = ['nTopCount' => $params['limit']];  //   default = 3 

@@ -155,29 +155,24 @@ $app->group(
                 )->add(new Middleware\Auth());
 
 
-                
+                /**
+                 * Reference
+                 */
+                $app->group(
+                    '/references',
+                    function() use ($app): void {
+                        $app->get('[/]', Controller\Reference\Reference::class.':getList'); 
+                        $app->get('/courts', Controller\Reference\Reference::class.':getCourts');
+                        // $app->get('/sections/{section_id:[0-9]+}', Controller\Reference\Section::class.':getOne');
+                        // $app->get('/products', Controller\Reference\Product::class.':getList');
+                        // $app->get('/products/{product_id:[0-9]+}', Controller\Reference\Product::class.':getOne');
+                        // $app->get('/filter', Controller\Reference\Filter::class.':get');
 
-                // /**
-                //  * Catalog
-                //  */
-                // $app->group(
-                //     '/catalog',
-                //     function() use ($app): void {
-                //         $app->get('[/]', Controller\Catalog\Catalog::class.':getList');
-                //         //$app->get('/prices', Controller\Catalog\Catalog::class.':getPrices');
-                //         //$app->get('/vats', Controller\Catalog\Catalog::class.':getVats');
-                //         $app->get('/{iblock_id:[0-9]+}', Controller\Catalog\Catalog::class.':getOne');
-                //         $app->get('/{iblock_id:[0-9]+}/sections', Controller\Catalog\Section::class.':getList');
-                //         $app->get('/{iblock_id:[0-9]+}/sections/{section_id:[0-9]+}', Controller\Catalog\Section::class.':getOne');
-                //         $app->get('/{iblock_id:[0-9]+}/products', Controller\Catalog\Product::class.':getList');
-                //         $app->get('/{iblock_id:[0-9]+}/products/{product_id:[0-9]+}', Controller\Catalog\Product::class.':getOne');
-                //         $app->get('/{iblock_id:[0-9]+}/filter', Controller\Catalog\Filter::class.':get');
-
-                //         //$app->post('/{iblock_id}/filter', Controller\Catalog\Product::class.':getOne');
+                        //$app->post('/{iblock_id}/filter', Controller\Catalog\Product::class.':getOne');
 
 
-                //     }
-                // )->add(new Middleware\Auth());
+                    }
+                )->add(new Middleware\Auth());
 
 
 

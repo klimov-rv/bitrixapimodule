@@ -15,9 +15,10 @@ class News extends Base
     public function getOne(Request $request, Response $response, array $args): Response
     { 
 
-        $args['iblock_id'] = "news";
+        $args['iblock_code'] = "news";
+        $args['iblock_id'] = 9;
         // repository
-        $product = $this->getRepository()->getPublicationTypeEl((string)$args['iblock_id'], (int)$args['id'], $this->getUserId($request)); 
+        $product = $this->getRepository()->getPublicationTypeEl((array)$args, (int)$args['id'], $this->getUserId($request)); 
 
         return $this->response($response, self::RESPONSE_SUCCESS, $product, StatusCode::HTTP_OK);
     }

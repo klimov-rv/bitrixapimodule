@@ -535,7 +535,6 @@ class UserRepository extends BaseRepository
                 }
             }
         }
-        \Bitrix\Main\Diag\Debug::dumpToFile($returnFiles, $varName = '$returnFiles', $fileName = 'dumpToFile.txt');
 
         return $returnFiles;
     }

@@ -7,6 +7,7 @@ use Sotbit\RestAPI\Repository\IndexRepository;
 use Sotbit\RestAPI\Repository\NavigationRepository; 
 use Sotbit\RestAPI\Repository\PublicationRepository; 
 use Sotbit\RestAPI\Repository\RubricRepository; 
+use Sotbit\RestAPI\Repository\ReferenceRepository; 
 
 use Psr\Container\ContainerInterface;
 use Sotbit\RestAPI\Core\Helper;
@@ -39,6 +40,12 @@ $container['rubric_repository'] = static function(
     ContainerInterface $container
 ): RubricRepository {
     return new RubricRepository();
+};
+
+$container['reference_repository'] = static function(
+    ContainerInterface $container
+): ReferenceRepository {
+    return new ReferenceRepository();
 };
 
 /**

@@ -35,7 +35,8 @@ class Type extends PublicationRepository
     ];
 
     
-    public function get(array $params) {
+    public function getOne(array $params) 
+    {
         $result = [];
 
         if(!$params['ID']) {
@@ -50,143 +51,81 @@ class Type extends PublicationRepository
         if(!$iblockId) {
             throw new PublicationException(l::get('ERROR_PUBLICATION_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
         } 
+        $params['filter'] =  [ 'ID' => $params['ID'], 'IBLOCK_ID' => $params['IBLOCK_ID'], 'IBLOCK_CODE' => $params['IBLOCK_CODE'] ];
+        // $data = $this->getElements([
+        //     'filter' => [
+        //         'ID' => $params['ID'],
+        //         'IBLOCK_CODE' => $params['IBLOCK_CODE']
+        //     ],
+        //     'limit' => 1
+        // ], 
+        $navParams = ['nPageSize' => $params['limit'], 'iNumPage' => $params['page']];
+        $arSelect = Array("ID", "IBLOCK_ID", "NAME", "USER_NAME", "DATE_CREATE", "CREATED_BY", "PREVIEW_PICTURE", "DETAIL_PICTURE", "DETAIL_TEXT", "DETAIL_TEXT_TYPE", "PROPERTY_PUB_THEMES" );
 
-        $data = $this->getElements([
-            'filter' => [
-                'ID' => $params['ID'],
-                'IBLOCK_CODE' => $params['IBLOCK_CODE']
-            ],
-            'limit' => 1
-        ],
-        self::TYPE_DETAIL);
+        $req = \CIBlockElement::GetList($params['order'],   $params['filter'],  false,      $navParams,                 $arSelect); 
+
+        $tag_elems = [];
+        $prepareEl = [];
+        // PROPERTY_PUB_THEMES_VALUE	"393"
+        // $res = \CIBlockElement::GetByID($element["PROPERTY_PUB_THEMES_VALUE"]);  
+             
+        if ($ob = $req->GetNextElement()){ 
+            $arProps = $ob->GetProperties(); 
+            $arField = $ob->GetFields();
+            $prepareEl["ID"] = $arField["ID"]; 
+            $prepareEl["NAME"] = $arField["NAME"];  
+            $prepareEl["PREVIEW_PICTURE"] = $arField["PREVIEW_PICTURE"];
+            $prepareEl["DETAIL_TEXT"] = $arField["DETAIL_TEXT"];
+            $prepareEl["CREATED_DATE"] = $arField["DATE_CREATE"];
+            $prepareEl["USER_NAME"] = $arField["USER_NAME"];   
+            
+            foreach ($arProps["PUB_THEMES"]["VALUE"] as $propId) {
+                $res = \CIBlockElement::GetByID($propId);
+                if($ar_res = $res->GetNext()) { 
+                    array_push($tag_elems, [
+                        "PUB_THEME_ID" => $ar_res['ID'],
+                        "PUB_THEME_NAME" => $ar_res["NAME"],
+                        "PUB_THEME_CODE" => $ar_res['CODE']]);
+                }
+                $prepareEl['PUB_THEME_TAGS'] = $tag_elems;
+            }
+            
+            // \Bitrix\Main\Diag\Debug::dumpToFile($arField, $varName = '$arField', $fileName = 'dumpToFile.txt');
+            $respn = UserTable::getById($arField["CREATED_BY"]);
+
+            if (!($user = $respn->fetch())) {
+                $prepareEl["USER_PHOTO"] = 'images/nophoto.jpg';
+            } 
+            $prepareEl["USER_PHOTO"] = \CFile::GetPath($user['PERSONAL_PHOTO']); 
+
+
+            $data = $this->prepareReturn($prepareEl, self::TYPE_DETAIL);
+        }
+        
 
         if(!$data) {
             throw new PublicationException(l::get('ERROR_PUBLICATION_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
-        } 
-        
-        // привязка продуктов
-        // $product = $this->getProducts([$id]);
- 
-        // $data['PRODUCT'] = $product[$id]; 
-        // collect data
+        }
 
         $result['data'] = $data ?: [];
 
         return $result;
     }
-
-    // Тут возможно будем встраивать торговые предложения подписок
-    // public function getProducts(array $elementIds): array
-    // {
-    //     $products = [];
-
-    //     if(count($elementIds)) {
-
-
-    //         $existOffers = \CCatalogSKU::getExistOffers($elementIds);
-
-    //         // offers id
-    //         $arOffersIds = $existOffers ? array_keys(array_filter($existOffers)) : [];
-
-    //         // no offers id
-    //         $arNoOffersIds = array_diff($elementIds, $arOffersIds);
-
-    //         // ratio
-    //         $productRatioList = ProductTable::getCurrentRatioWithMeasure($arNoOffersIds);
-
-
-    //         // products
-    //         $select = ['ID', 'TYPE', 'AVAILABLE',
-    //             'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO',
-    //             'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH',
-    //             'BARCODE_MULTI',
-    //             'MEASURE',
-
-    //             'VAT_ID', 'VAT_INCLUDED'
-    //         ];
-    //         $select = array_merge($select, \Bitrix\Catalog\Product\SystemField::getFieldList());
-
-    //         $req = ProductTable::getList(
-    //             [
-    //                 'select' => $select,
-    //                 'filter' => ['@ID' => $elementIds],
-    //             ]
-    //         );
-
-    //         while($product = $req->fetch()) {
-
-    //             if(in_array($product['ID'], $elementIds)) {
-
-    //                 $product['TYPE_NAME'] = null;
-    //                 $product['TYPE_IS_OFFER'] = "N";
-
-    //                 // product type
-    //                 if(isset($product['TYPE'], $this->productTypes[$product['TYPE']])) {
-    //                     // type in words
-    //                     $product['TYPE_NAME'] = $this->productTypes[$product['TYPE']];
-
-    //                     // check type offers
-    //                     $product['TYPE_IS_OFFER'] = ((int)$product['TYPE'] === \Bitrix\Catalog\ProductTable::TYPE_SKU)
-    //                         ? 'Y' : 'N';
-    //                 }
-
-
-    //                 // product ratio
-    //                 if(!empty($productRatioList) && isset($productRatioList[$product['ID']])) {
-    //                     $product['MEASURE_RATIO']
-    //                         = $product['DEFAULT_QUANTITY'] = $productRatioList[$product['ID']]['RATIO'];
-    //                     $product['MEASURE_NAME'] = $productRatioList[$product['ID']]['MEASURE']['~SYMBOL_RUS'];
-    //                 }
-    //             }
-
-    //             // config: show quantity
-    //             if(!$this->config->isShowQuantity()) {
-    //                 $product['QUANTITY'] = null;
-    //             }
-
-    //             // sort array
-    //             if(is_array($product)) {
-    //                 ksort($product);
-    //             }
-
-    //             // collect all information
-    //             $products[$product['ID']] =  $product;
-    //         }
-    //     }
-
-    //     return $products;
-    // }
-
-
-
-    /**
-     * @param $params
-     *
-     * @return array
-     */
+    
     public function getElements(array $params, string $type = self::TYPE_LIST): array
     {
         $elements = [];
 
         $navParams = ['nPageSize' => $params['limit'], 'iNumPage' => $params['page']];
         $params['select'] = empty($params['select'])? self::FIELD_ELEMENT : array_unique(array_merge($params['select'], self::FIELD_ELEMENT_REQUEST));
-       
-        $arFilter = $params['filter'];
-        
-        if($type === self::TYPE_DETAIL) {
-            $arSelect = Array("ID", "NAME", "USER_NAME", "PREVIEW_PICTURE", "DETAIL_PICTURE", 'DETAIL_TEXT', 'DETAIL_TEXT_TYPE');
-        } else {
-            $arSelect = Array("ID", "NAME", "USER_NAME", "PREVIEW_PICTURE");
-        }
-        // $req = \CIBlockElement::GetList(Array(),            $arFilter,          false,      Array("nPageSize"=>10),    $params['select']);
+        $arSelect = Array("ID",  "NAME", "USER_NAME", "PREVIEW_PICTURE", "PROPERTY_PUB_THEMES.NAME" ); 
+         
         $req = \CIBlockElement::GetList($params['order'],   $params['filter'],  false,      $navParams,                 $arSelect); 
 
-
         while ($element = $req->fetch()) { 
-            array_push($elements,  $this->prepareReturn($element, self::TYPE_DETAIL));
-            // \Bitrix\Main\Diag\Debug::dumpToFile($elements, $varName = '$elements', $fileName = 'dumpToFile.txt');
-        } 
-
+            
+            array_push($elements,  $this->prepareReturn($element, self::TYPE_DETAIL)); 
+        }
 
         return $elements;
     }
@@ -196,7 +135,7 @@ class Type extends PublicationRepository
         if($this->getUserId() === null) {
             throw new PublicationException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
         }
- 
+        \Bitrix\Main\Diag\Debug::dumpToFile($params, $varName = '$params', $fileName = 'dumpToFile.txt');
         $result = [];
         $data = [];
         $collect = [];
@@ -250,7 +189,6 @@ class Type extends PublicationRepository
 
         return $result;
     }
-
       
     protected function prepareReturn(array $array, string $typeView = self::TYPE_LIST): array
     {
@@ -265,7 +203,7 @@ class Type extends PublicationRepository
             if(is_numeric($array['DETAIL_PICTURE'])) {
                 $array['DETAIL_PICTURE'] = $this->getPictureSrc((int) $array['DETAIL_PICTURE'], $sizePreview);
             } else {
-                $array['DETAIL_PICTURE']['ORIGINAL'] = $array['DETAIL_PICTURE']['RESIZE'] = Product::IMAGE_NOT_FOUND;
+                $array['DETAIL_PICTURE']['ORIGINAL'] = $array['DETAIL_PICTURE']['RESIZE'] = self::IMAGE_NOT_FOUND;
             }
 
  
@@ -273,7 +211,7 @@ class Type extends PublicationRepository
             if(is_numeric($array['PREVIEW_PICTURE'])) {
                 $array['PREVIEW_PICTURE'] = $this->getPictureSrc((int) $array['PREVIEW_PICTURE'], $sizePreview);
             } else {
-                $array['PREVIEW_PICTURE']['ORIGINAL'] = $array['PREVIEW_PICTURE']['RESIZE'] = Product::IMAGE_NOT_FOUND;
+                $array['PREVIEW_PICTURE']['ORIGINAL'] = $array['PREVIEW_PICTURE']['RESIZE'] = self::IMAGE_NOT_FOUND;
             }
         }
 

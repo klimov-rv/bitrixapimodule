@@ -36,7 +36,7 @@ class Auth extends Base
         if ($jwt === NULL) {
             $jwt = $request->getHeaderLine('Authorization'); 
         }  
-        $decoded = $this->decodedHeader("Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzIiwibG9naW4iOiJhcGlfdXNlciIsImlhdCI6MTY5MzQ2OTQ0NiwiZXhwIjoxNjk0MDc0MjQ2fQ.PholdnXYbdpGkld6_BSOVs0Ua6NK0L-Js4IWWDsg9LoxEZB03EPR-z2FN6o5mDihT6ltGEx8JCY8k3JFgA-Shw");
+        $decoded = $this->decodedHeader("Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzIiwibG9naW4iOiJhcGlfdXNlciIsImlhdCI6MTY5ODQ4Nzc2OCwiZXhwIjoxNjk5MDkyNTY4fQ.rVBrB9Mj4B0kX4BOKhmggDTrnawHryXPot0-czZJsE5CjJBPZR28xhnRKOtA2mwBYXPDoPZT9y2pVpK9kq6oUw");
         $object = $request->getParsedBody();
         $object['decoded'] = $decoded;
 
